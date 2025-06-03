@@ -18,10 +18,11 @@ This implementation runs in the console/terminal and allows players to customize
 
 ## Demo
 
-<video controls width="600">
-  <source src="demo/demo.mp4" type="video/mp4">
-  Your browser does not support the video tag. You can <a href="demo.mp4">download the demo video here</a>.
-</video>
+
+
+https://github.com/user-attachments/assets/c6e4238b-996b-463b-a04a-e689bdf92dd5
+
+
 
 ## Requirements
 
