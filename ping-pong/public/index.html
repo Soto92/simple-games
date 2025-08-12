@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mobile Pong</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #000;
+      }
+      canvas {
+        border: 1px solid white;
+        display: block;
+        margin: auto;
+      }
+      #gameDisplay {
+        position: absolute;
+        z-index: 9999;
+        color: aliceblue;
+        bottom: 170px;
+      }
+      #readyBtn {
+        padding: 10px 20px;
+        font-size: 18px;
+        background: green;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        cursor: pointer;
+      }
+      #readyBtn:disabled {
+        background: gray;
+        cursor: default;
+      }
+      #status {
+        margin-top: 10px;
+        font-size: 18px;
+      }
+      #countdown {
+        font-size: 48px;
+        margin-top: 10px;
+        height: 60px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="gameDisplay">
+      <button id="readyBtn">I am ready</button>
+      <div id="status">Waiting for players...</div>
+      <div id="countdown"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const readyBtn = document.getElementById("readyBtn");
+      const statusDiv = document.getElementById("status");
+      const countdownDiv = document.getElementById("countdown");
+
+      let playerNumber = null;
+      let gameState = null;
+      let paddleWidth = 80;
+      let paddleHeight = 10;
+      let gameStarted = false;
+
+      function resizeCanvas() {
+        canvas.width = 900;
+        canvas.height = window.innerHeight * 0.7;
+      }
+
+      resizeCanvas();
+
+      window.addEventListener("resize", () => {
+        resizeCanvas();
+      });
+
+      socket.on("playerNumber", (num) => {
+        playerNumber = num;
+        statusDiv.textContent = `You are Player ${num}. Click "I am ready" to start.`;
+      });
+
+      socket.on("full", () => {
+        statusDiv.textContent = "Room full!";
+        readyBtn.disabled = true;
+      });
+
+      socket.on("playerCount", (count) => {
+        if (count < 2) {
+          statusDiv.textContent = "Waiting for second player...";
+          readyBtn.disabled = true;
+        } else {
+          statusDiv.textContent = 'Both players connected. Click "I am ready"!';
+          readyBtn.disabled = false;
+        }
+      });
+
+      socket.on("playerReadyStatus", (count) => {
+        statusDiv.textContent = `Players ready: ${count}/2`;
+        if (count === 2) {
+          readyBtn.disabled = true;
+        }
+      });
+
+      socket.on("countdown", (n) => {
+        countdownDiv.textContent = n > 0 ? n : "";
+      });
+
+      socket.on("gameStarted", () => {
+        gameStarted = true;
+        countdownDiv.textContent = "";
+        statusDiv.textContent = "Game started!";
+      });
+
+      socket.on("gameOver", (scores) => {
+        alert(`Game Over! P1: ${scores.p1} - P2: ${scores.p2}`);
+        gameStarted = false;
+        readyBtn.disabled = false;
+        statusDiv.textContent = 'Game over. Click "I am ready" to play again.';
+        paddles = { p1: 260, p2: 260 };
+      });
+
+      socket.on("gameState", (state) => {
+        gameState = state;
+      });
+
+      function movePaddle(clientX) {
+        if (!gameStarted) return;
+        let rect = canvas.getBoundingClientRect();
+        let xPos = clientX - rect.left - paddleWidth / 2;
+        xPos = Math.max(0, Math.min(600 - paddleWidth, xPos));
+        socket.emit("paddleMove", xPos);
+      }
+
+      canvas.addEventListener("mousemove", (e) => movePaddle(e.clientX));
+      canvas.addEventListener("touchmove", (e) => {
+        movePaddle(e.touches[0].clientX);
+      });
+
+      readyBtn.addEventListener("click", () => {
+        readyBtn.disabled = true;
+        socket.emit("playerReady");
+      });
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (!gameState) return;
+
+        ctx.beginPath();
+        ctx.arc(
+          gameState.ball.x,
+          gameState.ball.y,
+          gameState.ball.radius,
+          0,
+          Math.PI * 2
+        );
+        ctx.fillStyle = "white";
+        ctx.fill();
+
+        ctx.fillStyle = "red";
+        ctx.fillRect(gameState.paddles.p1, 10, paddleWidth, paddleHeight);
+
+        ctx.fillStyle = "blue";
+        ctx.fillRect(gameState.paddles.p2, 380, paddleWidth, paddleHeight);
+
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "white";
+        ctx.fillText(`P1: ${gameState.scores.p1}`, 50, 30);
+        ctx.fillText(`P2: ${gameState.scores.p2}`, canvas.width - 100, 30);
+      }
+
+      function gameLoop() {
+        draw();
+        requestAnimationFrame(gameLoop);
+      }
+      gameLoop();
+    </script>
+  </body>
+</html>
