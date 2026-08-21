@@ -21,6 +21,12 @@ A classic Pong game built with Node.js and Socket.IO where two players control p
 
 ## Demo
 
+https://github.com/user-attachments/assets/c22d4069-0bfa-4fda-b8cb-a5be3342a0b2
+
+note: Here the red player is in a PC and the blue in a mobile device. 
+And I know there is a bug when the ball is passing behind the paddle lol
+
+
 ## Installation
 
 1. Clone the repository:
