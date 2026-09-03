@@ -10,7 +10,7 @@ Traverse a 12,000-pixel-wide world across four increasingly challenging sections
 
 ## Demo
 
-[Gameplay Demo](demo/first-gameplay.mp4)
+https://github.com/user-attachments/assets/9fd926ee-f950-48fe-8ad4-d95860c3c9ad
 
 ## Building & Running
 
