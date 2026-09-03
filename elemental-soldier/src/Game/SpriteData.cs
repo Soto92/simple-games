@@ -22,6 +22,7 @@ public class SpriteGroup
     public List<SpriteFrame> Frames { get; set; } = [];
     public int CurrentFrame { get; set; }
     public float FrameTimer { get; set; }
+    public bool Loop { get; set; } = true;
 
     public SpriteFrame Frame => Frames.Count > 0 ? Frames[CurrentFrame] : new SpriteFrame();
 
@@ -33,7 +34,9 @@ public class SpriteGroup
         if (FrameTimer >= frameDuration)
         {
             FrameTimer -= frameDuration;
-            CurrentFrame = (CurrentFrame + 1) % Frames.Count;
+            CurrentFrame++;
+            if (CurrentFrame >= Frames.Count)
+                CurrentFrame = Loop ? 0 : Frames.Count - 1;
         }
     }
 
@@ -88,7 +91,7 @@ public class SpriteData
         return data;
     }
 
-    public Texture2D RenderToTexture(string spriteName, int frameIndex, Color? tint = null)
+    public Texture2D RenderToTexture(string spriteName, int frameIndex, Color? tint = null, bool flipX = false)
     {
         var group = Sprites[spriteName];
         var frame = group.Frames[frameIndex];
@@ -98,14 +101,23 @@ public class SpriteData
         foreach (var px in frame.Pixels)
         {
             int x = px[0], y = px[1], colorId = px[2];
+            if (flipX) x = frame.Width - 1 - x;
+
             Color c = Colors[colorId];
 
             if (tint.HasValue)
             {
+                // Partial tint: only mid-tone armor pixels get the element color.
+                // Dark shadows/outlines and bright highlights keep their original color,
+                // so the sprite stays readable instead of becoming a flat silhouette.
+                float lum = (0.2126f * c.R + 0.7152f * c.G + 0.0722f * c.B) / 255f;
+                float mix = SmoothStep(0.25f, 0.55f, lum) * (1f - SmoothStep(0.72f, 0.92f, lum));
+                float shaded = 0.45f + 0.55f * lum;
+
                 c = new Color(
-                    (byte)(c.R * tint.Value.R / 255),
-                    (byte)(c.G * tint.Value.G / 255),
-                    (byte)(c.B * tint.Value.B / 255),
+                    (byte)(c.R + ((byte)(tint.Value.R * shaded) - c.R) * mix),
+                    (byte)(c.G + ((byte)(tint.Value.G * shaded) - c.G) * mix),
+                    (byte)(c.B + ((byte)(tint.Value.B * shaded) - c.B) * mix),
                     c.A
                 );
             }
@@ -116,6 +128,12 @@ public class SpriteData
         var texture = Raylib.LoadTextureFromImage(image);
         Raylib.UnloadImage(image);
         return texture;
+    }
+
+    private static float SmoothStep(float edge0, float edge1, float x)
+    {
+        float t = Math.Clamp((x - edge0) / (edge1 - edge0), 0f, 1f);
+        return t * t * (3f - 2f * t);
     }
 }
 

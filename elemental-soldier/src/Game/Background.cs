@@ -12,13 +12,6 @@ public class Background : IDisposable
     private int _screenW;
     private int _screenH;
 
-    private static readonly Color SkyTopDefault = new(15, 18, 40);
-    private static readonly Color SkyBotDefault = new(40, 50, 80);
-    private static readonly Color MountainFar = new(25, 30, 50);
-    private static readonly Color MountainNear = new(35, 42, 65);
-    private static readonly Color ForestFar = new(20, 35, 30);
-    private static readonly Color ForestNear = new(15, 28, 22);
-
     public Background(int screenW, int screenH)
     {
         _screenW = screenW;
@@ -66,13 +59,7 @@ public class Background : IDisposable
 
     private Texture2D GenerateSky(Element element)
     {
-        var (top, bot) = element switch
-        {
-            Element.Fire => (new Color(30, 10, 10), new Color(80, 30, 15)),
-            Element.Ice => (new Color(10, 18, 35), new Color(25, 50, 80)),
-            Element.Electric => (new Color(15, 15, 30), new Color(40, 40, 70)),
-            _ => (SkyTopDefault, SkyBotDefault),
-        };
+        var (top, bot) = Theme.SkyPalette(element);
 
         var image = Raylib.GenImageColor(_screenW, _screenH, top);
 
@@ -87,9 +74,7 @@ public class Background : IDisposable
 
         if (element != Element.Ice)
         {
-            var starColor = element == Element.Fire
-                ? new Color((byte)255, (byte)200, (byte)100, (byte)200)
-                : new Color((byte)200, (byte)210, (byte)240, (byte)180);
+            var starColor = element == Element.Fire ? Theme.SunSky : Theme.StarSky;
 
             var rng = new Random(42);
             for (int i = 0; i < 60; i++)
@@ -108,13 +93,7 @@ public class Background : IDisposable
 
     private Texture2D GenerateMountains(Element element)
     {
-        var (dark, light) = element switch
-        {
-            Element.Fire => (new Color((byte)40, (byte)15, (byte)10), new Color((byte)65, (byte)25, (byte)15)),
-            Element.Ice => (new Color((byte)15, (byte)25, (byte)45), new Color((byte)30, (byte)45, (byte)70)),
-            Element.Electric => (new Color((byte)25, (byte)25, (byte)45), new Color((byte)40, (byte)40, (byte)65)),
-            _ => (MountainFar, MountainNear),
-        };
+        var (dark, light) = Theme.MountainPalette(element);
 
         int texH = _screenH;
         var image = Raylib.GenImageColor(_screenW, texH, new Color((byte)0, (byte)0, (byte)0, (byte)0));
@@ -153,13 +132,7 @@ public class Background : IDisposable
 
     private Texture2D GenerateForest(Element element)
     {
-        var (dark, light) = element switch
-        {
-            Element.Fire => (new Color((byte)35, (byte)12, (byte)8), new Color((byte)55, (byte)20, (byte)12)),
-            Element.Ice => (new Color((byte)12, (byte)22, (byte)38), new Color((byte)22, (byte)38, (byte)55)),
-            Element.Electric => (new Color((byte)20, (byte)20, (byte)38), new Color((byte)32, (byte)32, (byte)52)),
-            _ => (ForestFar, ForestNear),
-        };
+        var (dark, light) = Theme.ForestPalette(element);
 
         int texH = _screenH;
         var image = Raylib.GenImageColor(_screenW, texH, new Color((byte)0, (byte)0, (byte)0, (byte)0));
